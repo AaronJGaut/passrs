@@ -1,51 +1,21 @@
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
+use passrs::cmd::{self, Command, Commands};
+use passrs::cli;
 
-use passrs;
-use passrs::Command;
-use clap::{Arg, App};
+use clap::App;
 
-use std::error::Error;
+fn main() {
+    let commands = cmd::CommandVec::build();
 
-fn repl() {
-    let mut rl = Editor::<()>::new();
-    loop {
-        let readline = rl.readline("\n\x1b[92;1mpassrs>\x1b[0m ");
-        match readline {
-            Ok(line) => {
-                rl.add_history_entry(line.as_str());
-                let words = passrs::to_args(&line);
-                if words.len() > 0
-                {
-                    match passrs::match_command(words[0]) {
-                        Ok("add") => {
-                            let cmd = passrs::CommandAdd::new();
-                            cmd.parse_and_run();
-                        }
-                        Ok(cmd) => println!("Command: {}", cmd),
-                        Err(err) => println!("Error: {}", err),
-                    }
-                }
-            },
-            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
-                if passrs::confirm_interrupt() {
-                    break
-                }
-            },
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break
-            }
+    let mut app = App::new("passrs")
+        .version("0.1.0")
+        .about("CLI password manager written in rust");
+
+    for command in &commands {
+        if !command.repl_only() {
+            app = app.subcommand(command.clap_app());
         }
     }
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let matches = App::new("passrs")
-        .version("0.1.0")
-        .subcommand(App::new("add")
-            .short_flag('A')
-        )
+        /*
         .subcommand(App::new("generate")
             .short_flag('G')
         )
@@ -69,14 +39,19 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .subcommand(App::new("yank")
             .short_flag('Y')
-        )
-        .get_matches();
+        );
+        */
+    let matches = app.get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("add") {
-        passrs::cmd_add();
-    } else {
-        repl();
+    let mut ran_command = false;
+    for command in &commands {
+        if let Some(cmd_matches) = matches.subcommand_matches(command.name()) {
+            command.parse_and_run(cmd_matches);
+            ran_command = true;
+            break;
+        }
     }
-
-    Ok(())
+    if !ran_command {
+        cli::repl(commands);
+    }
 }
