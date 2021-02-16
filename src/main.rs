@@ -15,32 +15,6 @@ fn main() {
             app = app.subcommand(command.clap_app());
         }
     }
-        /*
-        .subcommand(App::new("generate")
-            .short_flag('G')
-        )
-        .subcommand(App::new("info")
-            .short_flag('I')
-        )
-        .subcommand(App::new("list")
-            .short_flag('L')
-        )
-        .subcommand(App::new("meta")
-            .short_flag('M')
-        )
-        .subcommand(App::new("remove")
-            .short_flag('R')
-        )
-        .subcommand(App::new("update")
-            .short_flag('U')
-        )
-        .subcommand(App::new("write")
-            .short_flag('W')
-        )
-        .subcommand(App::new("yank")
-            .short_flag('Y')
-        );
-        */
     let matches = app.get_matches();
 
     let mut ran_command = false;
