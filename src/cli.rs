@@ -1,4 +1,5 @@
 use crate::cmd::{self, Command, Commands};
+use crate::db;
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -8,10 +9,14 @@ use termion::event::Key;
 use termion::raw::IntoRawMode;
 
 use std::error::Error;
-use std::io;
+use std::io::{self, Write};
+
+use edit;
+
+const EDITOR_TAIL: &'static str = "";
 
 
-pub fn repl(commands: cmd::CommandVec) {
+pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
     let mut rl = Editor::<()>::new();
     loop {
         let readline = rl.readline("\x1b[92;1mpassrs>\x1b[0m ");
@@ -22,7 +27,7 @@ pub fn repl(commands: cmd::CommandVec) {
                 if words.len() > 0
                 {
                     match commands.find(words[0]) {
-                        Ok(cmd) => cmd.parse_and_run(&cmd.clap_app().get_matches()),
+                        Ok(cmd) => cmd.parse_and_run(&cmd.clap_app().get_matches_from(words), &mut db),
                         Err(err) => println!("Error: {}", err),
                     }
                 }
@@ -39,7 +44,6 @@ pub fn repl(commands: cmd::CommandVec) {
         }
     }
 }
-
 
 pub fn confirm_interrupt() -> bool {
     println!("Press ctrl-c or ctrl-d again to quit or any key to continue");
@@ -59,8 +63,61 @@ pub fn get_key() -> Key {
     io::stdin().keys().next().unwrap().unwrap()
 }
 
-pub fn edit(prompt: &str) -> String
-{
-    String::from("")
+pub fn read_editor(existing_text: &str, tail: &str) -> io::Result<String> {
+    let lines = tail.lines();
+    let mut pre_text = String::from(existing_text);
+    for line in lines {
+        pre_text += "\n# ";
+        pre_text += line;
+    }
+
+    let post_text = edit::edit(pre_text)?;
+
+    let lines = post_text.trim().lines();
+    let mut notes = String::new();
+    for line in lines {
+        if !line.starts_with("#") {
+            notes += line;
+        }
+    }
+    Ok(notes)
 }
 
+pub fn clear() {
+    print!("\x1b[2J\x1b[3J\x1b[1;1H");
+}
+
+pub fn read(prompt: &str, allow_empty: bool) -> Option<String> {
+    let mut rl = Editor::<()>::new();
+    loop {
+        match rl.readline(prompt) {
+            Ok(text) => if !allow_empty && text.as_str() == "" {
+                continue
+            } else {
+                return Some(text)
+            },
+            Err(_) => return None
+        }
+    }
+}
+
+pub fn read_hidden(prompt: &str, allow_empty: bool) -> Option<String> {
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+    let stdin = io::stdin();
+    let mut stdin = stdin.lock();
+    loop {
+        stdout.write_all(prompt.as_bytes()).unwrap();
+        stdout.flush().unwrap();
+        let pass = stdin.read_passwd(&mut stdout);
+        stdout.write_all(b"\n");
+        if let Ok(Some(pass)) = pass {
+            if !allow_empty && pass == "" {
+                continue;
+            }
+            return Some(pass);
+        } else {
+            return None;
+        }
+    }
+}

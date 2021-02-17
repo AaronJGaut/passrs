@@ -1,5 +1,6 @@
 use passrs::cmd::{self, Command, Commands};
 use passrs::cli;
+use passrs::db;
 
 use clap::App;
 
@@ -8,7 +9,7 @@ fn main() {
 
     let mut app = App::new("passrs")
         .version("0.1.0")
-        .about("CLI password manager written in rust");
+        .about("CLI password manager");
 
     for command in &commands {
         if !command.repl_only() {
@@ -17,15 +18,17 @@ fn main() {
     }
     let matches = app.get_matches();
 
+    let mut db = db::Database::new("asdf");
+
     let mut ran_command = false;
     for command in &commands {
         if let Some(cmd_matches) = matches.subcommand_matches(command.name()) {
-            command.parse_and_run(cmd_matches);
+            command.parse_and_run(cmd_matches, &mut db);
             ran_command = true;
             break;
         }
     }
     if !ran_command {
-        cli::repl(commands);
+        cli::repl(commands, db);
     }
 }

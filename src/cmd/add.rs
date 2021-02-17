@@ -1,4 +1,6 @@
 use super::{Command, CommandWrapper};
+use crate::db;
+use crate::cli;
 
 pub struct ArgsAdd {
     show: bool,
@@ -14,12 +16,16 @@ impl Command for CommandAdd {
     }
     fn name(&self) -> &'static str { "add" }
     fn help(&self) -> &'static str { "Add a new entry" }
-    fn run(&self, opts: ArgsAdd) {
+    fn run(&self, opts: ArgsAdd, db: &mut db::Database) {
         if opts.show {
             println!("adding");
         }
+        let input = cli::read_editor("", "Enter any notes above");
+        if let Ok(text) = input {
+            println!("{}", text);
+        }
     }
-    fn parse(&self, raw_args: &clap::ArgMatches) -> ArgsAdd {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsAdd {
         ArgsAdd { show: true }
     }
     fn clap_app(&self) -> clap::App {

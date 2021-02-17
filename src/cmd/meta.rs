@@ -1,4 +1,5 @@
 use super::{Command, CommandWrapper};
+use crate::db;
 
 pub struct ArgsMeta {
     show: bool,
@@ -14,9 +15,9 @@ impl Command for CommandMeta {
     }
     fn name(&self) -> &'static str { "meta" }
     fn help(&self) -> &'static str { "Print information about the database" }
-    fn run(&self, opts: ArgsMeta) {
+    fn run(&self, opts: ArgsMeta, db: &mut db::Database) {
     }
-    fn parse(&self, raw_args: &clap::ArgMatches) -> ArgsMeta {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsMeta {
         ArgsMeta { show: true }
     }
     fn clap_app(&self) -> clap::App {

@@ -1,4 +1,5 @@
 use super::{Command, CommandWrapper};
+use crate::db;
 
 pub struct ArgsWrite {
     //encryption: DbEncryption,
@@ -18,9 +19,9 @@ impl Command for CommandWrite {
     }
     fn name(&self) -> &'static str { "write" }
     fn help(&self) -> &'static str { "Write the database" }
-    fn run(&self, opts: ArgsWrite) {
+    fn run(&self, opts: ArgsWrite, db: &mut db::Database) {
     }
-    fn parse(&self, raw_args: &clap::ArgMatches) -> ArgsWrite {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsWrite {
         ArgsWrite {
             password: false,
             show: true,

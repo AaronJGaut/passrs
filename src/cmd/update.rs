@@ -1,4 +1,5 @@
 use super::{Command, CommandWrapper};
+use crate::db;
 
 pub struct ArgsUpdate {
     account: bool,
@@ -19,9 +20,9 @@ impl Command for CommandUpdate {
     }
     fn name(&self) -> &'static str { "update" }
     fn help(&self) -> &'static str { "Update an entry" }
-    fn run(&self, opts: ArgsUpdate) {
+    fn run(&self, opts: ArgsUpdate, db: &mut db::Database) {
     }
-    fn parse(&self, raw_args: &clap::ArgMatches) -> ArgsUpdate {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsUpdate {
         ArgsUpdate {
             account: false,
             username: false,

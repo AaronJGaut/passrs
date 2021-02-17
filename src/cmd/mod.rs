@@ -1,3 +1,4 @@
+use crate::db;
 pub mod add;
 pub mod clear;
 pub mod generate;
@@ -16,7 +17,7 @@ pub trait CommandWrapper {
     fn name(&self) -> &'static str;
     fn help(&self) -> &'static str;
     fn clap_app(&self) -> clap::App;
-    fn parse_and_run(&self, raw_args: &clap::ArgMatches);
+    fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database);
     fn repl_only(&self) -> bool;
 }
 
@@ -27,8 +28,8 @@ impl<C: Command> CommandWrapper for C {
     fn help(&self) -> &'static str {
         self.help()
     }
-    fn parse_and_run(&self, raw_args: &clap::ArgMatches) {
-        self.run(self.parse(raw_args))
+    fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) {
+        self.run(self.parse(raw_args, db), db)
     }
     fn clap_app(&self) -> clap::App {
         self.clap_app()
@@ -43,8 +44,8 @@ pub trait Command {
     fn new() -> Box<dyn CommandWrapper>;
     fn name(&self) -> &'static str;
     fn help(&self) -> &'static str;
-    fn run(&self, options: Self::Args);
-    fn parse(&self, raw_args: &clap::ArgMatches) -> Self::Args;
+    fn run(&self, options: Self::Args, db: &mut db::Database);
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Self::Args;
     fn clap_app(&self) -> clap::App;
     fn repl_only(&self) -> bool;
 }
