@@ -7,16 +7,19 @@ pub struct ArgsGenerate {
     show: bool,
 }
 
-pub struct CommandGenerate {
-}
+pub struct CommandGenerate {}
 
 impl Command for CommandGenerate {
     type Args = ArgsGenerate;
     fn new() -> Box<dyn CommandWrapper> {
         Box::new(CommandGenerate {})
     }
-    fn name(&self) -> &'static str { "generate" }
-    fn help(&self) -> &'static str { "Generate a secret and copy it to clipboard" }
+    fn name(&self) -> &'static str {
+        "generate"
+    }
+    fn help(&self) -> &'static str {
+        "Generate a secret and copy it to clipboard"
+    }
     fn run(&self, opts: ArgsGenerate, db: &mut db::Database) {
         println!("{} {} {}", opts.show, opts.length, opts.alphanumeric);
     }
@@ -33,22 +36,25 @@ impl Command for CommandGenerate {
             .bin_name(Command::name(self))
             .about(Command::help(self))
             .setting(clap::AppSettings::DisableVersion)
-            .arg(clap::Arg::new("length")
-                .about("Num. characters in generated secret")
-                .short('l')
-                .long("length")
-                .takes_value(true)
-                .default_value("40")
+            .arg(
+                clap::Arg::new("length")
+                    .about("Num. characters in generated secret")
+                    .short('l')
+                    .long("length")
+                    .takes_value(true)
+                    .default_value("40"),
             )
-            .arg(clap::Arg::new("show")
-                 .about("Print the generated secret instead of copying to clipboard")
-                 .short('s')
-                 .long("show")
+            .arg(
+                clap::Arg::new("show")
+                    .about("Print the generated secret instead of copying to clipboard")
+                    .short('s')
+                    .long("show"),
             )
-            .arg(clap::Arg::new("alphanumeric")
-                 .about("Use only alphanumeric characters")
-                 .short('a')
-                 .long("--alphanumeric")
+            .arg(
+                clap::Arg::new("alphanumeric")
+                    .about("Use only alphanumeric characters")
+                    .short('a')
+                    .long("--alphanumeric"),
             )
     }
     fn repl_only(&self) -> bool {

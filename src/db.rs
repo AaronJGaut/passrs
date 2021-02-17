@@ -8,13 +8,17 @@ pub enum DbFormat {
 
 pub struct Database {
     filepath: String,
-    settings: Option<DbSettings>,  // Lazy load only when needed
-    records: Option<Vec<Record>>,  // Lazy load only when needed
+    settings: Option<DbSettings>, // Lazy load only when needed
+    records: Option<Vec<Record>>, // Lazy load only when needed
 }
 
 impl Database {
     pub fn new(filepath: &str) -> Database {
-        Database {filepath : String::from(filepath), settings : None, records : None}
+        Database {
+            filepath: String::from(filepath),
+            settings: None,
+            records: None,
+        }
     }
 }
 

@@ -4,8 +4,8 @@ use crate::db;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-use termion::input::TermRead;
 use termion::event::Key;
+use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
 use std::error::Error;
@@ -15,7 +15,6 @@ use edit;
 
 const EDITOR_TAIL: &'static str = "";
 
-
 pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
     let mut rl = Editor::<()>::new();
     loop {
@@ -24,27 +23,24 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
                 let words = to_args(&line);
-                if words.len() > 0
-                {
+                if words.len() > 0 {
                     match commands.find(words[0]) {
-                        Ok(cmd) => {
-                            match &cmd.clap_app().try_get_matches_from(words) {
-                                Ok(matches) => cmd.parse_and_run(matches, &mut db),
-                                Err(err) => print!("{}", err)
-                            }
+                        Ok(cmd) => match &cmd.clap_app().try_get_matches_from(words) {
+                            Ok(matches) => cmd.parse_and_run(matches, &mut db),
+                            Err(err) => print!("{}", err),
                         },
                         Err(err) => println!("Error: {}", err),
                     }
                 }
-            },
+            }
             Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
                 if confirm_interrupt() {
-                    break
+                    break;
                 }
-            },
+            }
             Err(err) => {
                 println!("Error: {:?}", err);
-                break
+                break;
             }
         }
     }
@@ -59,7 +55,7 @@ pub fn confirm_interrupt() -> bool {
     }
 }
 
-pub fn to_args(input: &str) -> Vec::<&str> {
+pub fn to_args(input: &str) -> Vec<&str> {
     input.split_ascii_whitespace().collect()
 }
 
@@ -96,12 +92,14 @@ pub fn read(prompt: &str, allow_empty: bool) -> Option<String> {
     let mut rl = Editor::<()>::new();
     loop {
         match rl.readline(prompt) {
-            Ok(text) => if !allow_empty && text.as_str() == "" {
-                continue
-            } else {
-                return Some(text)
-            },
-            Err(_) => return None
+            Ok(text) => {
+                if !allow_empty && text.as_str() == "" {
+                    continue;
+                } else {
+                    return Some(text);
+                }
+            }
+            Err(_) => return None,
         }
     }
 }

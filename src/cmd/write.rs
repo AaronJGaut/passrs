@@ -9,18 +9,20 @@ pub struct ArgsWrite {
     filepath: String,
 }
 
-pub struct CommandWrite {
-}
+pub struct CommandWrite {}
 
 impl Command for CommandWrite {
     type Args = ArgsWrite;
     fn new() -> Box<dyn CommandWrapper> {
         Box::new(CommandWrite {})
     }
-    fn name(&self) -> &'static str { "write" }
-    fn help(&self) -> &'static str { "Write the database" }
-    fn run(&self, opts: ArgsWrite, db: &mut db::Database) {
+    fn name(&self) -> &'static str {
+        "write"
     }
+    fn help(&self) -> &'static str {
+        "Write the database"
+    }
+    fn run(&self, opts: ArgsWrite, db: &mut db::Database) {}
     fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsWrite {
         ArgsWrite {
             password: false,

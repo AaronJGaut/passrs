@@ -50,7 +50,7 @@ pub trait Command {
     fn repl_only(&self) -> bool;
 }
 
-pub type CommandVec = Vec::<Box<dyn CommandWrapper>>;
+pub type CommandVec = Vec<Box<dyn CommandWrapper>>;
 
 pub trait Commands {
     fn build() -> Self;
@@ -75,8 +75,7 @@ impl Commands for CommandVec {
         ]
     }
 
-    fn find(&self, name: &str) -> Result<&Box<dyn CommandWrapper>, &'static str>
-    {
+    fn find(&self, name: &str) -> Result<&Box<dyn CommandWrapper>, &'static str> {
         for command in self {
             if let Some(i) = command.name().find(name) {
                 if i == 0 {

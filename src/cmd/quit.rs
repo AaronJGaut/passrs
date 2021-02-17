@@ -1,17 +1,20 @@
-use std::process::exit;
 use super::{Command, CommandWrapper};
 use crate::db;
+use std::process::exit;
 
-pub struct CommandQuit {
-}
+pub struct CommandQuit {}
 
 impl Command for CommandQuit {
     type Args = ();
     fn new() -> Box<dyn CommandWrapper> {
         Box::new(CommandQuit {})
     }
-    fn name(&self) -> &'static str { "quit" }
-    fn help(&self) -> &'static str { "Exit passrs" }
+    fn name(&self) -> &'static str {
+        "quit"
+    }
+    fn help(&self) -> &'static str {
+        "Exit passrs"
+    }
     fn run(&self, _: (), db: &mut db::Database) {
         exit(0);
     }

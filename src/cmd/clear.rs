@@ -1,17 +1,20 @@
 use super::{Command, CommandWrapper};
-use crate::db;
 use crate::cli::clear;
+use crate::db;
 
-pub struct CommandClear {
-}
+pub struct CommandClear {}
 
 impl Command for CommandClear {
     type Args = ();
     fn new() -> Box<dyn CommandWrapper> {
         Box::new(CommandClear {})
     }
-    fn name(&self) -> &'static str { "clear" }
-    fn help(&self) -> &'static str { "Clear the terminal" }
+    fn name(&self) -> &'static str {
+        "clear"
+    }
+    fn help(&self) -> &'static str {
+        "Clear the terminal"
+    }
     fn run(&self, _: (), db: &mut db::Database) {
         clear();
     }

@@ -1,8 +1,8 @@
-use passrs::cmd::{self, Command, Commands};
 use passrs::cli;
+use passrs::cmd::{self, Command, Commands};
 use passrs::db;
 
-use clap::{App, crate_version};
+use clap::{crate_version, App};
 
 fn main() {
     let commands = cmd::CommandVec::build();
