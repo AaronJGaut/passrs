@@ -1,4 +1,3 @@
-use crate::db;
 pub mod add;
 pub mod clear;
 pub mod generate;
@@ -12,6 +11,7 @@ pub mod update;
 pub mod write;
 pub mod yank;
 
+use crate::db;
 
 pub trait CommandWrapper {
     fn name(&self) -> &'static str;

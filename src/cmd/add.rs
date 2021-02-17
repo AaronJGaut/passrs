@@ -26,12 +26,19 @@ impl Command for CommandAdd {
         }
     }
     fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsAdd {
-        ArgsAdd { show: true }
+        ArgsAdd { show: raw_args.is_present("show") }
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
-            .about(Command::help(self))
             .short_flag('A')
+            .bin_name(Command::name(self))
+            .about(Command::help(self))
+            .setting(clap::AppSettings::DisableVersion)
+            .arg(clap::Arg::new("show")
+                 .about("Show the password during entry")
+                 .short('s')
+                 .long("show")
+            )
     }
     fn repl_only(&self) -> bool {
         false

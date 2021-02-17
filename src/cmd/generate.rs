@@ -29,8 +29,10 @@ impl Command for CommandGenerate {
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
-            .about(Command::help(self))
             .short_flag('G')
+            .bin_name(Command::name(self))
+            .about(Command::help(self))
+            .setting(clap::AppSettings::DisableVersion)
             .arg(clap::Arg::new("length")
                 .about("Num. characters in generated secret")
                 .short('l')

@@ -2,13 +2,13 @@ use passrs::cmd::{self, Command, Commands};
 use passrs::cli;
 use passrs::db;
 
-use clap::App;
+use clap::{App, crate_version};
 
 fn main() {
     let commands = cmd::CommandVec::build();
 
     let mut app = App::new("passrs")
-        .version("0.1.0")
+        .version(crate_version!())
         .about("CLI password manager");
 
     for command in &commands {

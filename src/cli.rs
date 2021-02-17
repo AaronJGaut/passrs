@@ -27,7 +27,12 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
                 if words.len() > 0
                 {
                     match commands.find(words[0]) {
-                        Ok(cmd) => cmd.parse_and_run(&cmd.clap_app().get_matches_from(words), &mut db),
+                        Ok(cmd) => {
+                            match &cmd.clap_app().try_get_matches_from(words) {
+                                Ok(matches) => cmd.parse_and_run(matches, &mut db),
+                                Err(err) => print!("{}", err)
+                            }
+                        },
                         Err(err) => println!("Error: {}", err),
                     }
                 }
