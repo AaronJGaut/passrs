@@ -48,7 +48,6 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
 
 pub fn confirm_interrupt() -> bool {
     println!("Press ctrl-c or ctrl-d again to quit or any key to continue");
-    // need raw mode to read a single character
     match get_key() {
         Key::Ctrl('c') | Key::Ctrl('d') => true,
         _ => false,
@@ -60,6 +59,7 @@ pub fn to_args(input: &str) -> Vec<&str> {
 }
 
 pub fn get_key() -> Key {
+    // need raw mode to read a single character
     let _stdout = io::stdout().into_raw_mode().unwrap();
     io::stdin().keys().next().unwrap().unwrap()
 }
