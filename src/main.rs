@@ -1,5 +1,5 @@
 use passrs::cli;
-use passrs::cmd::{self, Command, Commands};
+use passrs::cmd::{self, Commands};
 use passrs::db;
 
 use clap::{crate_version, App};

@@ -47,7 +47,7 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
 }
 
 pub fn confirm_interrupt() -> bool {
-    println!("Press ctrl-c or ctrl-d again to quit or any key to continue");
+    println!("Press ctrl-c or ctrl-d again to quit without saving or any key to continue");
     match get_key() {
         Key::Ctrl('c') | Key::Ctrl('d') => true,
         _ => false,
@@ -88,23 +88,18 @@ pub fn clear() {
     print!("\x1b[2J\x1b[3J\x1b[1;1H");
 }
 
-pub fn read(prompt: &str, allow_empty: bool) -> Option<String> {
+pub fn read(prompt: &str, allow_empty: bool) -> Result<String, ReadlineError> {
     let mut rl = Editor::<()>::new();
     loop {
-        match rl.readline(prompt) {
-            Ok(text) => {
-                if !allow_empty && text.as_str() == "" {
-                    continue;
-                } else {
-                    return Some(text);
-                }
-            }
-            Err(_) => return None,
+        let input = rl.readline(prompt)?;
+        if !allow_empty && input.as_str() == "" {
+            continue;
         }
+        return Ok(input);
     }
 }
 
-pub fn read_hidden(prompt: &str, allow_empty: bool) -> Option<String> {
+pub fn read_hidden(prompt: &str, allow_empty: bool) -> Result<String, ReadlineError> {
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     let stdin = io::stdin();
@@ -112,15 +107,26 @@ pub fn read_hidden(prompt: &str, allow_empty: bool) -> Option<String> {
     loop {
         stdout.write_all(prompt.as_bytes()).unwrap();
         stdout.flush().unwrap();
-        let pass = stdin.read_passwd(&mut stdout);
-        stdout.write_all(b"\n");
-        if let Ok(Some(pass)) = pass {
-            if !allow_empty && pass == "" {
-                continue;
-            }
-            return Some(pass);
+        let pass = stdin.read_passwd(&mut stdout)?.unwrap();
+        if !allow_empty && pass == "" {
+            continue;
+        }
+        return Ok(pass);
+    }
+}
+
+pub fn create_password(
+    prompt: &str,
+    confirm: &str,
+    mismatch: &str,
+) -> Result<String, ReadlineError> {
+    loop {
+        let pass1 = read_hidden(prompt, false)?;
+        let pass2 = read_hidden(confirm, false)?;
+        if pass1 == pass2 {
+            return Ok(String::from(pass1));
         } else {
-            return None;
+            println!("{}", mismatch);
         }
     }
 }
