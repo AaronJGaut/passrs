@@ -18,7 +18,9 @@ impl Command for CommandClear {
     fn run(&self, _: (), db: &mut db::Database) {
         clear();
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> () {}
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), String> {
+        Ok(())
+    }
     fn clap_app(&self) -> clap::App {
         clap::App::new("clear")
             .about(Command::help(self))

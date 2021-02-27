@@ -22,7 +22,9 @@ impl Command for CommandList {
             println!("{:>5} {}", it.0, it.1.account);
         }
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> () {}
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), String> {
+        Ok(())
+    }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
             .about(Command::help(self))

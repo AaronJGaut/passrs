@@ -13,9 +13,9 @@ use std::io::{self, Write};
 
 use edit;
 
-const EDITOR_TAIL: &'static str = "";
-
 pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
+    println!("=== passrs interactive mode ===");
+    println!("Enter help for a list of commands or quit to quit.");
     let mut rl = Editor::<()>::new();
     loop {
         let readline = rl.readline("\x1b[92;1mpassrs>\x1b[0m ");
@@ -29,7 +29,9 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
                             Ok(matches) => cmd.parse_and_run(matches, &mut db),
                             Err(err) => print!("{}", err),
                         },
-                        Err(err) => println!("Error: {}", err),
+                        Err(_) => println!(
+                            "Unknown command. Enter help for a list of commands or quit to quit."
+                        ),
                     }
                 }
             }
@@ -47,7 +49,7 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
 }
 
 pub fn confirm_interrupt() -> bool {
-    println!("Press ctrl-c or ctrl-d again to quit without saving or any key to continue");
+    println!("Press ctrl-c or ctrl-d again to quit without saving or any key to continue.");
     match get_key() {
         Key::Ctrl('c') | Key::Ctrl('d') => true,
         _ => false,
@@ -64,7 +66,7 @@ pub fn get_key() -> Key {
     io::stdin().keys().next().unwrap().unwrap()
 }
 
-pub fn read_editor(existing_text: &str, tail: &str) -> io::Result<String> {
+pub fn read_editor(existing_text: &str, tail: &str) -> Result<String, ReadlineError> {
     let lines = tail.lines();
     let mut pre_text = String::from(existing_text);
     for line in lines {
@@ -79,8 +81,10 @@ pub fn read_editor(existing_text: &str, tail: &str) -> io::Result<String> {
     for line in lines {
         if !line.starts_with("#") {
             notes += line;
+            notes += "\n";
         }
     }
+    notes.trim();
     Ok(notes)
 }
 
@@ -92,7 +96,7 @@ pub fn read(prompt: &str, allow_empty: bool) -> Result<String, ReadlineError> {
     let mut rl = Editor::<()>::new();
     loop {
         let input = rl.readline(prompt)?;
-        if !allow_empty && input.as_str() == "" {
+        if !allow_empty && input.is_empty() {
             continue;
         }
         return Ok(input);
@@ -107,11 +111,45 @@ pub fn read_hidden(prompt: &str, allow_empty: bool) -> Result<String, ReadlineEr
     loop {
         stdout.write_all(prompt.as_bytes()).unwrap();
         stdout.flush().unwrap();
-        let pass = stdin.read_passwd(&mut stdout)?.unwrap();
-        if !allow_empty && pass == "" {
-            continue;
+        let pass = stdin.read_passwd(&mut stdout)?;
+        stdout.write_all(b"\n").unwrap();
+        stdout.flush().unwrap();
+        match pass {
+            Some(pass) => {
+                if !allow_empty && pass == "" {
+                    continue;
+                } else {
+                    return Ok(pass);
+                }
+            }
+            None => return Err(ReadlineError::Interrupted),
         }
-        return Ok(pass);
+    }
+}
+
+pub fn read_confirm(prompt: &str, default: Option<bool>) -> Result<bool, ReadlineError> {
+    let prompt = String::from(prompt) + match default {
+        Some(default) => if default {
+            " [Y/n]: "
+        } else {
+            " [y/N]: "
+        },
+        None => " [y/n]: ",
+    };
+    loop {
+        let raw_input = match default {
+            Some(default) => read(prompt.as_str(), true)?,
+            None => read(prompt.as_str(), false)?,
+        };
+        let input = raw_input.clone().to_ascii_lowercase();
+        if input == "y" || input == "yes" {
+            return Ok(true)
+        } else if input == "n" || input == "no" {
+            return Ok(false)
+        } else if input.is_empty() {
+            return Ok(default.unwrap());
+        }
+        println!("Invalid input: \"{}\"", raw_input);
     }
 }
 

@@ -7,7 +7,7 @@ pub struct ArgsUpdate {
     password: bool,
     notes: bool,
     show: bool,
-    index: u32,
+    index: usize,
 }
 
 pub struct CommandUpdate {}
@@ -21,18 +21,22 @@ impl Command for CommandUpdate {
         "update"
     }
     fn help(&self) -> &'static str {
-        "Update an entry"
+        "Update one or more account fields"
     }
     fn run(&self, opts: ArgsUpdate, db: &mut db::Database) {}
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsUpdate {
-        ArgsUpdate {
+    fn parse(
+        &self,
+        raw_args: &clap::ArgMatches,
+        db: &mut db::Database,
+    ) -> Result<ArgsUpdate, String> {
+        Ok(ArgsUpdate {
             account: false,
             username: false,
             password: false,
             notes: false,
             show: false,
             index: 0,
-        }
+        })
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))

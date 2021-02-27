@@ -1,5 +1,8 @@
+extern crate copypasta;
+
 use super::{Command, CommandWrapper};
 use crate::db;
+use copypasta::{ClipboardContext, ClipboardProvider};
 use rand::seq::IteratorRandom;
 
 const UPPER: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -10,7 +13,7 @@ const SPECIAL: &'static str = " `~!@#$%^&*()-_=+[]{};:'\"\\|,<.>/?";
 pub struct ArgsGenerate {
     length: u32,
     punctuation: bool,
-    show: bool,
+    yank: bool,
 }
 
 fn generate_secret(length: u32, punctuation: bool) -> String {
@@ -40,17 +43,33 @@ impl Command for CommandGenerate {
         "generate"
     }
     fn help(&self) -> &'static str {
-        "Generate a secret and copy it to clipboard"
+        "Randomly generate a secret"
     }
     fn run(&self, opts: ArgsGenerate, db: &mut db::Database) {
-        println!("{}", generate_secret(opts.length, opts.punctuation));
-    }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsGenerate {
-        ArgsGenerate {
-            show: raw_args.is_present("show"),
-            length: u32::from_str_radix(raw_args.value_of("length").unwrap(), 10).unwrap(),
-            punctuation: raw_args.is_present("punctuation"),
+        let secret = generate_secret(opts.length, opts.punctuation);
+        if opts.yank {
+            let mut ctx = ClipboardContext::new().unwrap();
+            ctx.set_contents(secret);
+            println!("Secret copied to clipboard.");
+        } else {
+            println!("{}", secret);
         }
+    }
+    fn parse(
+        &self,
+        raw_args: &clap::ArgMatches,
+        db: &mut db::Database,
+    ) -> Result<ArgsGenerate, String> {
+        let length_str = raw_args.value_of("length").unwrap();
+        let length = match u32::from_str_radix(length_str, 10) {
+            Ok(length) => length,
+            Err(_) => return Err(format!("Failed to parse length \"{}\"", length_str)),
+        };
+        Ok(ArgsGenerate {
+            yank: raw_args.is_present("yank"),
+            length: length,
+            punctuation: raw_args.is_present("punctuation"),
+        })
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
@@ -67,16 +86,16 @@ impl Command for CommandGenerate {
                     .default_value("40"),
             )
             .arg(
-                clap::Arg::new("show")
-                    .about("Print the generated secret instead of copying to clipboard")
-                    .short('s')
-                    .long("show"),
+                clap::Arg::new("yank")
+                    .about("Copy the generated secret to clipboard instead of printing")
+                    .short('y')
+                    .long("yank"),
             )
             .arg(
                 clap::Arg::new("punctuation")
                     .about("Use punctuation characters for extra entropy")
                     .short('p')
-                    .long("--punctuation"),
+                    .long("punctuation"),
             )
     }
     fn repl_only(&self) -> bool {

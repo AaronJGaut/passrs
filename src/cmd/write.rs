@@ -23,12 +23,16 @@ impl Command for CommandWrite {
         "Write the database"
     }
     fn run(&self, opts: ArgsWrite, db: &mut db::Database) {}
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsWrite {
-        ArgsWrite {
+    fn parse(
+        &self,
+        raw_args: &clap::ArgMatches,
+        db: &mut db::Database,
+    ) -> Result<ArgsWrite, String> {
+        Ok(ArgsWrite {
             password: false,
             show: true,
             filepath: "".to_string(),
-        }
+        })
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))

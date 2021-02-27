@@ -12,6 +12,7 @@ pub mod write;
 pub mod yank;
 
 use crate::db;
+use rustyline::error::ReadlineError;
 
 pub trait CommandWrapper {
     fn name(&self) -> &'static str;
@@ -29,7 +30,10 @@ impl<C: Command> CommandWrapper for C {
         self.help()
     }
     fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) {
-        self.run(self.parse(raw_args, db), db)
+        match self.parse(raw_args, db) {
+            Ok(args) => self.run(args, db),
+            Err(msg) => println!("{}", msg),
+        };
     }
     fn clap_app(&self) -> clap::App {
         self.clap_app()
@@ -45,7 +49,11 @@ pub trait Command {
     fn name(&self) -> &'static str;
     fn help(&self) -> &'static str;
     fn run(&self, options: Self::Args, db: &mut db::Database);
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Self::Args;
+    fn parse(
+        &self,
+        raw_args: &clap::ArgMatches,
+        db: &mut db::Database,
+    ) -> Result<Self::Args, String>;
     fn clap_app(&self) -> clap::App;
     fn repl_only(&self) -> bool;
 }
@@ -54,7 +62,7 @@ pub type CommandVec = Vec<Box<dyn CommandWrapper>>;
 
 pub trait Commands {
     fn build() -> Self;
-    fn find(&self, name: &str) -> Result<&Box<dyn CommandWrapper>, &'static str>;
+    fn find(&self, name: &str) -> Result<&Box<dyn CommandWrapper>, ()>;
 }
 
 impl Commands for CommandVec {
@@ -75,7 +83,7 @@ impl Commands for CommandVec {
         ]
     }
 
-    fn find(&self, name: &str) -> Result<&Box<dyn CommandWrapper>, &'static str> {
+    fn find(&self, name: &str) -> Result<&Box<dyn CommandWrapper>, ()> {
         for command in self {
             if let Some(i) = command.name().find(name) {
                 if i == 0 {
@@ -83,6 +91,6 @@ impl Commands for CommandVec {
                 }
             }
         }
-        Err("Unknown command")
+        Err(())
     }
 }

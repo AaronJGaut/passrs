@@ -1,6 +1,7 @@
 use super::{Command, CommandWrapper};
 use crate::cli;
 use crate::db::{self, Record};
+use rustyline::error::ReadlineError;
 
 pub struct ArgsAdd {
     show: bool,
@@ -18,43 +19,62 @@ impl Command for CommandAdd {
         "add"
     }
     fn help(&self) -> &'static str {
-        "Add a new entry"
+        "Add a new account"
     }
     fn run(&self, opts: ArgsAdd, db: &mut db::Database) {
+        // Calling explicitly so loading/creation occurs before any add prompts
         db.require_loaded();
-        if opts.show {
-            println!("adding");
-        }
-        let username = cli::read("Username: ", true).unwrap();
-        let username = if username.is_empty() {
-            None
-        } else {
-            Some(username)
+
+        let user = match cli::read("Username: ", true) {
+            Ok(user) => user,
+            Err(ReadlineError::Interrupted) => return,
+            Err(err) => {
+                println!("{}", err);
+                return;
+            }
         };
-        let password = if opts.show {
-            cli::read("Password: ", false).unwrap()
+        let user = if user.is_empty() { None } else { Some(user) };
+
+        let pass = if opts.show {
+            cli::read("Password: ", false)
         } else {
             cli::create_password(
                 "Password: ",
                 "Repeat to confirm: ",
                 "Mismatch. Please try again.",
             )
-            .unwrap()
         };
-        let notes = cli::read_editor("", "Enter any notes above").unwrap();
+        let pass = match pass {
+            Ok(pass) => pass,
+            Err(ReadlineError::Interrupted) => return,
+            Err(err) => {
+                println!("{}", err);
+                return;
+            }
+        };
+
+        let notes = match cli::read_editor("", "Enter any notes above") {
+            Ok(notes) => notes,
+            Err(ReadlineError::Interrupted) => return,
+            Err(err) => {
+                println!("{}", err);
+                return;
+            }
+        };
         let notes = if notes.is_empty() { None } else { Some(notes) };
+
         db.add_record(Record {
             account: opts.account,
-            username: username,
-            password: password,
-            notes: Some(notes.unwrap()),
+            username: user,
+            password: pass,
+            notes: notes,
         });
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsAdd {
-        ArgsAdd {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<ArgsAdd, String> {
+        Ok(ArgsAdd {
             show: raw_args.is_present("show"),
             account: String::from(raw_args.value_of("account").unwrap()),
-        }
+        })
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))

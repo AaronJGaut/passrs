@@ -3,7 +3,7 @@ use crate::db;
 
 pub struct ArgsInfo {
     show: bool,
-    index: u32,
+    index: usize,
 }
 
 pub struct CommandInfo {}
@@ -17,19 +17,53 @@ impl Command for CommandInfo {
         "info"
     }
     fn help(&self) -> &'static str {
-        "Print info about an entry"
+        "Display info for an account"
     }
-    fn run(&self, opts: ArgsInfo, db: &mut db::Database) {}
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsInfo {
-        ArgsInfo {
-            show: true,
-            index: 0,
+    fn run(&self, opts: ArgsInfo, db: &mut db::Database) {
+        let record = &db.get_records()[opts.index];
+        println!("Account: {}", record.account);
+        if let Some(username) = record.username.as_ref() {
+            println!("Username: {}", username);
         }
+        if opts.show {
+            println!("Password: {}", record.password);
+        }
+        if let Some(notes) = record.notes.as_ref() {
+            println!("Notes:");
+            for line in notes.lines() {
+                println!("\t{}", line);
+            }
+        }
+    }
+    fn parse(
+        &self,
+        raw_args: &clap::ArgMatches,
+        db: &mut db::Database,
+    ) -> Result<ArgsInfo, String> {
+        let index = db::parse_index(db, raw_args.value_of("index").unwrap())?;
+        Ok(ArgsInfo {
+            show: raw_args.is_present("show"),
+            index: index,
+        })
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
-            .about(Command::help(self))
             .short_flag('I')
+            .bin_name(Command::name(self))
+            .about(Command::help(self))
+            .setting(clap::AppSettings::DisableVersion)
+            .arg(
+                clap::Arg::new("index")
+                    .about("Account index or name")
+                    .takes_value(true)
+                    .required(true),
+            )
+            .arg(
+                clap::Arg::new("show")
+                    .about("Print the password")
+                    .short('s')
+                    .long("show"),
+            )
     }
     fn repl_only(&self) -> bool {
         false

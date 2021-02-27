@@ -16,11 +16,15 @@ impl Command for CommandMeta {
         "meta"
     }
     fn help(&self) -> &'static str {
-        "Print information about the database"
+        "Display database metadata"
     }
     fn run(&self, opts: ArgsMeta, db: &mut db::Database) {}
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> ArgsMeta {
-        ArgsMeta { show: true }
+    fn parse(
+        &self,
+        raw_args: &clap::ArgMatches,
+        db: &mut db::Database,
+    ) -> Result<ArgsMeta, String> {
+        Ok(ArgsMeta { show: true })
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))

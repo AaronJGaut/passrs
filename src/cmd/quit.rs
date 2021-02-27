@@ -13,12 +13,14 @@ impl Command for CommandQuit {
         "quit"
     }
     fn help(&self) -> &'static str {
-        "Exit passrs"
+        "Quit interactive passrs"
     }
     fn run(&self, _: (), db: &mut db::Database) {
         exit(0);
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> () {}
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), String> {
+        Ok(())
+    }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
             .about(Command::help(self))
