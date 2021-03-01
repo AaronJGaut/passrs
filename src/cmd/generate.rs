@@ -8,7 +8,7 @@ use rand::seq::IteratorRandom;
 const UPPER: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const LOWER: &'static str = "abcdefghijklmnopqrstuvwxyz";
 const NUM: &'static str = "0123456789";
-const SPECIAL: &'static str = " `~!@#$%^&*()-_=+[]{};:'\"\\|,<.>/?";
+const SPECIAL: &'static str = "`~!@#$%^&*()-_=+[]{};:'\"\\|,<.>/?";
 
 pub struct ArgsGenerate {
     length: u32,
