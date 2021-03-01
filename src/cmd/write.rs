@@ -22,7 +22,9 @@ impl Command for CommandWrite {
     fn help(&self) -> &'static str {
         "Write the database"
     }
-    fn run(&self, opts: ArgsWrite, db: &mut db::Database) {}
+    fn run(&self, opts: ArgsWrite, db: &mut db::Database) {
+        db.save(None);
+    }
     fn parse(
         &self,
         raw_args: &clap::ArgMatches,

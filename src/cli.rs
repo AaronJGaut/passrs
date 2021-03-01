@@ -77,14 +77,7 @@ pub fn read_editor(existing_text: &str, tail: &str) -> Result<String, ReadlineEr
     let post_text = edit::edit(pre_text)?;
 
     let lines = post_text.trim().lines();
-    let mut notes = String::new();
-    for line in lines {
-        if !line.starts_with("#") {
-            notes += line;
-            notes += "\n";
-        }
-    }
-    notes.trim();
+    let notes = lines.filter(|x| !x.starts_with("#")).collect::<Vec<&str>>().join("\n");
     Ok(notes)
 }
 
