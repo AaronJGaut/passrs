@@ -1,6 +1,7 @@
 use super::{Command, CommandWrapper};
 use crate::cli::clear;
 use crate::db;
+use crate::error::PassError;
 
 pub struct CommandClear {}
 
@@ -15,10 +16,11 @@ impl Command for CommandClear {
     fn help(&self) -> &'static str {
         "Clear the terminal"
     }
-    fn run(&self, _: (), db: &mut db::Database) {
+    fn run(&self, _: (), db: &mut db::Database) -> Result<(), PassError> {
         clear();
+        Ok(())
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), String> {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), PassError> {
         Ok(())
     }
     fn clap_app(&self) -> clap::App {

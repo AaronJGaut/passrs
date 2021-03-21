@@ -2,6 +2,7 @@ use super::{Command, CommandWrapper};
 use crate::cli;
 use crate::db::{self, Record};
 use rustyline::error::ReadlineError;
+use crate::error::PassError;
 
 pub struct ArgsAdd {
     show: bool,
@@ -21,18 +22,11 @@ impl Command for CommandAdd {
     fn help(&self) -> &'static str {
         "Add a new account"
     }
-    fn run(&self, opts: ArgsAdd, db: &mut db::Database) {
+    fn run(&self, opts: ArgsAdd, db: &mut db::Database) -> Result<(), PassError> {
         // Calling explicitly so loading/creation occurs before any add prompts
-        db.require_loaded();
+        db.require_loaded()?;
 
-        let user = match cli::read("Username: ", true) {
-            Ok(user) => user,
-            Err(ReadlineError::Interrupted) => return,
-            Err(err) => {
-                println!("{}", err);
-                return;
-            }
-        };
+        let user = cli::read("Username: ", true)?;
         let user = if user.is_empty() { None } else { Some(user) };
 
         let pass = if opts.show {
@@ -43,24 +37,9 @@ impl Command for CommandAdd {
                 "Repeat to confirm: ",
                 "Mismatch. Please try again.",
             )
-        };
-        let pass = match pass {
-            Ok(pass) => pass,
-            Err(ReadlineError::Interrupted) => return,
-            Err(err) => {
-                println!("{}", err);
-                return;
-            }
-        };
+        }?;
 
-        let notes = match cli::read_editor("", "Enter any notes above") {
-            Ok(notes) => notes,
-            Err(ReadlineError::Interrupted) => return,
-            Err(err) => {
-                println!("{}", err);
-                return;
-            }
-        };
+        let notes = cli::read_editor("", "Enter any notes above")?;
         let notes = if notes.is_empty() { None } else { Some(notes) };
 
         db.add_record(Record {
@@ -68,9 +47,11 @@ impl Command for CommandAdd {
             username: user,
             password: pass,
             notes: notes,
-        });
+        })?;
+
+        Ok(())
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<ArgsAdd, String> {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<ArgsAdd, PassError> {
         Ok(ArgsAdd {
             show: raw_args.is_present("show"),
             account: String::from(raw_args.value_of("account").unwrap()),
@@ -85,13 +66,14 @@ impl Command for CommandAdd {
             .arg(
                 clap::Arg::new("account")
                     .about("Name of the account")
-                    .required(true),
+                    .takes_value(true)
+                    .required(true)
             )
             .arg(
                 clap::Arg::new("show")
                     .about("Show the password during entry")
                     .short('s')
-                    .long("show"),
+                    .long("show")
             )
     }
     fn repl_only(&self) -> bool {

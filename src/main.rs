@@ -41,7 +41,12 @@ fn main() {
     let mut ran_command = false;
     for command in &commands {
         if let Some(cmd_matches) = matches.subcommand_matches(command.name()) {
-            command.parse_and_run(cmd_matches, &mut db);
+            if let Err(err) = command.parse_and_run(cmd_matches, &mut db) {
+                println!("Error: {}", err);
+            };
+            if db.modified {
+                db.save(None);
+            }
             ran_command = true;
             break;
         }

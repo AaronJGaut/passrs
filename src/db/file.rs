@@ -2,10 +2,11 @@ use std::{fs, io};
 use crate::cli;
 use crate::db::{self, crypto};
 use rand::Rng;
+use crate::error::PassError;
 
 const VERSION: &'static str = "4";
 
-pub fn load(filepath: &str) -> Result<db::DbData, io::Error> {
+pub fn load(filepath: &str) -> Result<db::DbData, PassError> {
     let version = parse_version(filepath)?;
     match version {
         4 => load_v4(filepath),
@@ -14,7 +15,7 @@ pub fn load(filepath: &str) -> Result<db::DbData, io::Error> {
     }
 }
 
-pub fn save(filepath: &str, data: &db::DbData) -> Result<(), io::Error> {
+pub fn save(filepath: &str, data: &db::DbData) -> Result<(), PassError> {
     let mut records_array = Vec::<serde_json::Value>::new();
     for record in &data.records {
         let mut record_json = serde_json::Map::new();
@@ -32,11 +33,10 @@ pub fn save(filepath: &str, data: &db::DbData) -> Result<(), io::Error> {
         "records": records_array,
     });
     let payload = payload_json.to_string();
-    let payload_bytes = payload.as_bytes();
     let mut salt = [0u8; 18];
     rand::thread_rng().fill(&mut salt);
     let key = crypto::kdf(data.password.as_slice(), &salt, 1000000);
-    let payload = crypto::encrypt(&payload_bytes, &key);
+    let payload = crypto::encrypt(&payload.as_bytes(), &key);
     let payload = base64::encode(&payload);
     let mut payload_array = Vec::<serde_json::Value>::new();
     for chunk in payload.as_bytes().chunks(50) {
@@ -58,7 +58,7 @@ pub fn save(filepath: &str, data: &db::DbData) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn parse_version(filepath: &str) -> Result<u64, io::Error> {
+fn parse_version(filepath: &str) -> Result<u64, PassError> {
     let f = fs::File::open(filepath)?;
     let reader = io::BufReader::new(f);
     let obj: serde_json::Value = serde_json::from_reader(reader).unwrap();
@@ -82,7 +82,7 @@ fn parse_version(filepath: &str) -> Result<u64, io::Error> {
     Ok(version)
 }
 
-fn load_v3(filepath: &str) -> Result<db::DbData, io::Error> {
+fn load_v3(filepath: &str) -> Result<db::DbData, PassError> {
     let f = fs::File::open(filepath)?;
     let reader = io::BufReader::new(f);
     let obj: serde_json::Value = serde_json::from_reader(reader).unwrap();
@@ -113,7 +113,7 @@ fn load_v3(filepath: &str) -> Result<db::DbData, io::Error> {
         _ => panic!(),
     };
     let salt = base64::decode(salt).unwrap();
-    let mut password: Vec<u8> = cli::read_hidden("Master password: ", false).unwrap().as_bytes().to_vec();
+    let mut password: Vec<u8> = cli::read_hidden("Master password: ", false)?.as_bytes().to_vec();
     let payload_bytes = base64::decode(payload).unwrap();
     let mut text = String::from("");
     loop {
@@ -123,7 +123,7 @@ fn load_v3(filepath: &str) -> Result<db::DbData, io::Error> {
             text = String::from_utf8(result).unwrap();
             break;
         }
-        password = cli::read_hidden("Wrong password. Try again: ", false).unwrap().as_bytes().to_vec();
+        password = cli::read_hidden("Wrong password. Try again: ", false)?.as_bytes().to_vec();
     }
     Ok(db::DbData {
         settings: db::DbSettings {},
@@ -184,7 +184,7 @@ fn parse_records(payload_text: &str) -> Vec<db::Record> {
 }
 
 
-fn load_v4(filepath: &str) -> Result<db::DbData, io::Error> {
+fn load_v4(filepath: &str) -> Result<db::DbData, PassError> {
     let f = fs::File::open(filepath)?;
     let reader = io::BufReader::new(f);
     let obj: serde_json::Value = serde_json::from_reader(reader).unwrap();
@@ -215,7 +215,7 @@ fn load_v4(filepath: &str) -> Result<db::DbData, io::Error> {
         _ => panic!(),
     };
     let salt = base64::decode(salt).unwrap();
-    let mut password: Vec<u8> = cli::read_hidden("Master password: ", false).unwrap().as_bytes().to_vec();
+    let mut password: Vec<u8> = cli::read_hidden("Master password: ", false)?.as_bytes().to_vec();
     let payload_bytes = base64::decode(payload).unwrap();
     let mut text = String::from("");
     loop {
@@ -225,7 +225,7 @@ fn load_v4(filepath: &str) -> Result<db::DbData, io::Error> {
             text = String::from_utf8(result).unwrap();
             break;
         }
-        password = cli::read_hidden("Wrong password. Try again: ", false).unwrap().as_bytes().to_vec();
+        password = cli::read_hidden("Wrong password. Try again: ", false)?.as_bytes().to_vec();
     }
     Ok(db::DbData {
         settings: db::DbSettings {},

@@ -1,5 +1,5 @@
 use crate::cmd::{self, Command, Commands};
-use crate::db;
+use crate::{db, error};
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -18,7 +18,15 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
     println!("Enter help for a list of commands or quit to quit.");
     let mut rl = Editor::<()>::new();
     loop {
-        let readline = rl.readline("\x1b[92;1mpassrs>\x1b[0m ");
+        let status_str = if db.modified {
+            "*"
+        } else if db.loaded() {
+            ""
+        } else {
+            "🔒"
+        };
+        let prompt = format!("\x1b[92;1mpassrs{}>\x1b[0m ", status_str);
+        let readline = rl.readline(&prompt);
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str());
@@ -26,7 +34,10 @@ pub fn repl(commands: cmd::CommandVec, mut db: db::Database) {
                 if words.len() > 0 {
                     match commands.find(words[0]) {
                         Ok(cmd) => match &cmd.clap_app().try_get_matches_from(words) {
-                            Ok(matches) => cmd.parse_and_run(matches, &mut db),
+                            Ok(matches) => match cmd.parse_and_run(matches, &mut db) {
+                                Ok(_) | Err(error::PassError::Interrupt) => continue,
+                                Err(err) => println!("Error: {}", err),
+                            },
                             Err(err) => print!("{}", err),
                         },
                         Err(_) => println!(
@@ -66,7 +77,7 @@ pub fn get_key() -> Key {
     io::stdin().keys().next().unwrap().unwrap()
 }
 
-pub fn read_editor(existing_text: &str, tail: &str) -> Result<String, ReadlineError> {
+pub fn read_editor(existing_text: &str, tail: &str) -> Result<String, error::PassError> {
     let lines = tail.lines();
     let mut pre_text = String::from(existing_text);
     for line in lines {
@@ -85,7 +96,7 @@ pub fn clear() {
     print!("\x1b[2J\x1b[3J\x1b[1;1H");
 }
 
-pub fn read(prompt: &str, allow_empty: bool) -> Result<String, ReadlineError> {
+pub fn read(prompt: &str, allow_empty: bool) -> Result<String, error::PassError> {
     let mut rl = Editor::<()>::new();
     loop {
         let input = rl.readline(prompt)?;
@@ -96,7 +107,7 @@ pub fn read(prompt: &str, allow_empty: bool) -> Result<String, ReadlineError> {
     }
 }
 
-pub fn read_hidden(prompt: &str, allow_empty: bool) -> Result<String, ReadlineError> {
+pub fn read_hidden(prompt: &str, allow_empty: bool) -> Result<String, error::PassError> {
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     let stdin = io::stdin();
@@ -115,12 +126,12 @@ pub fn read_hidden(prompt: &str, allow_empty: bool) -> Result<String, ReadlineEr
                     return Ok(pass);
                 }
             }
-            None => return Err(ReadlineError::Interrupted),
+            None => return Err(error::PassError::Interrupt),
         }
     }
 }
 
-pub fn read_confirm(prompt: &str, default: Option<bool>) -> Result<bool, ReadlineError> {
+pub fn read_confirm(prompt: &str, default: Option<bool>) -> Result<bool, error::PassError> {
     let prompt = String::from(prompt) + match default {
         Some(default) => if default {
             " [Y/n]: "
@@ -150,7 +161,7 @@ pub fn create_password(
     prompt: &str,
     confirm: &str,
     mismatch: &str,
-) -> Result<String, ReadlineError> {
+) -> Result<String, error::PassError> {
     loop {
         let pass1 = read_hidden(prompt, false)?;
         let pass2 = read_hidden(confirm, false)?;

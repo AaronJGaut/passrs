@@ -4,6 +4,7 @@ use super::{Command, CommandWrapper};
 use crate::db;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use rand::seq::IteratorRandom;
+use crate::error::PassError;
 
 const UPPER: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const LOWER: &'static str = "abcdefghijklmnopqrstuvwxyz";
@@ -45,7 +46,7 @@ impl Command for CommandGenerate {
     fn help(&self) -> &'static str {
         "Randomly generate a secret"
     }
-    fn run(&self, opts: ArgsGenerate, db: &mut db::Database) {
+    fn run(&self, opts: ArgsGenerate, db: &mut db::Database) -> Result<(), PassError> {
         let secret = generate_secret(opts.length, opts.punctuation);
         if opts.yank {
             let mut ctx = ClipboardContext::new().unwrap();
@@ -54,16 +55,17 @@ impl Command for CommandGenerate {
         } else {
             println!("{}", secret);
         }
+        Ok(())
     }
     fn parse(
         &self,
         raw_args: &clap::ArgMatches,
         db: &mut db::Database,
-    ) -> Result<ArgsGenerate, String> {
+    ) -> Result<ArgsGenerate, PassError> {
         let length_str = raw_args.value_of("length").unwrap();
         let length = match u32::from_str_radix(length_str, 10) {
             Ok(length) => length,
-            Err(_) => return Err(format!("Failed to parse length \"{}\"", length_str)),
+            Err(_) => return Err(PassError::Other(format!("Failed to parse length \"{}\"", length_str))),
         };
         Ok(ArgsGenerate {
             yank: raw_args.is_present("yank"),

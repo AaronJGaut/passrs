@@ -1,18 +1,11 @@
 use super::{Command, CommandWrapper};
 use crate::db;
-
-pub struct ArgsWrite {
-    //encryption: DbEncryption,
-    //format: DbFormat,
-    password: bool,
-    show: bool,
-    filepath: String,
-}
+use crate::error::PassError;
 
 pub struct CommandWrite {}
 
 impl Command for CommandWrite {
-    type Args = ArgsWrite;
+    type Args = ();
     fn new() -> Box<dyn CommandWrapper> {
         Box::new(CommandWrite {})
     }
@@ -22,24 +15,23 @@ impl Command for CommandWrite {
     fn help(&self) -> &'static str {
         "Write the database"
     }
-    fn run(&self, opts: ArgsWrite, db: &mut db::Database) {
+    fn run(&self, _: (), db: &mut db::Database) -> Result<(), PassError> {
         db.save(None);
+        Ok(())
     }
     fn parse(
         &self,
         raw_args: &clap::ArgMatches,
         db: &mut db::Database,
-    ) -> Result<ArgsWrite, String> {
-        Ok(ArgsWrite {
-            password: false,
-            show: true,
-            filepath: "".to_string(),
-        })
+    ) -> Result<(), PassError> {
+        Ok(())
     }
     fn clap_app(&self) -> clap::App {
         clap::App::new(Command::name(self))
-            .about(Command::help(self))
             .short_flag('W')
+            .bin_name(Command::name(self))
+            .about(Command::help(self))
+            .setting(clap::AppSettings::DisableVersion)
     }
     fn repl_only(&self) -> bool {
         false

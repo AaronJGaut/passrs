@@ -1,5 +1,6 @@
 use super::{Command, CommandWrapper};
 use crate::db;
+use crate::error::PassError;
 
 pub struct ArgsInfo {
     show: bool,
@@ -19,8 +20,8 @@ impl Command for CommandInfo {
     fn help(&self) -> &'static str {
         "Display info for an account"
     }
-    fn run(&self, opts: ArgsInfo, db: &mut db::Database) {
-        let record = &db.get_records()[opts.index];
+    fn run(&self, opts: ArgsInfo, db: &mut db::Database) -> Result<(), PassError> {
+        let record = &db.get_records()?[opts.index];
         println!("Account: {}", record.account);
         if let Some(username) = record.username.as_ref() {
             println!("Username: {}", username);
@@ -34,12 +35,13 @@ impl Command for CommandInfo {
                 println!("\t{}", line);
             }
         }
+        Ok(())
     }
     fn parse(
         &self,
         raw_args: &clap::ArgMatches,
         db: &mut db::Database,
-    ) -> Result<ArgsInfo, String> {
+    ) -> Result<ArgsInfo, PassError> {
         let index = db::parse_index(db, raw_args.value_of("index").unwrap())?;
         Ok(ArgsInfo {
             show: raw_args.is_present("show"),

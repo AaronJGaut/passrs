@@ -12,13 +12,13 @@ pub mod write;
 pub mod yank;
 
 use crate::db;
-use rustyline::error::ReadlineError;
+use crate::error::PassError;
 
 pub trait CommandWrapper {
     fn name(&self) -> &'static str;
     fn help(&self) -> &'static str;
     fn clap_app(&self) -> clap::App;
-    fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database);
+    fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), PassError>;
     fn repl_only(&self) -> bool;
 }
 
@@ -29,11 +29,8 @@ impl<C: Command> CommandWrapper for C {
     fn help(&self) -> &'static str {
         self.help()
     }
-    fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) {
-        match self.parse(raw_args, db) {
-            Ok(args) => self.run(args, db),
-            Err(msg) => println!("{}", msg),
-        };
+    fn parse_and_run(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), PassError> {
+        self.run(self.parse(raw_args, db)?, db)
     }
     fn clap_app(&self) -> clap::App {
         self.clap_app()
@@ -48,12 +45,12 @@ pub trait Command {
     fn new() -> Box<dyn CommandWrapper>;
     fn name(&self) -> &'static str;
     fn help(&self) -> &'static str;
-    fn run(&self, options: Self::Args, db: &mut db::Database);
+    fn run(&self, options: Self::Args, db: &mut db::Database) -> Result<(), PassError>;
     fn parse(
         &self,
         raw_args: &clap::ArgMatches,
         db: &mut db::Database,
-    ) -> Result<Self::Args, String>;
+    ) -> Result<Self::Args, PassError>;
     fn clap_app(&self) -> clap::App;
     fn repl_only(&self) -> bool;
 }

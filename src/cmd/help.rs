@@ -1,5 +1,6 @@
 use crate::cmd::{self, Command, CommandWrapper, Commands};
 use crate::db;
+use crate::error::PassError;
 
 pub struct CommandHelp {}
 
@@ -14,7 +15,7 @@ impl Command for CommandHelp {
     fn help(&self) -> &'static str {
         "Print this message"
     }
-    fn run(&self, _: (), db: &mut db::Database) {
+    fn run(&self, _: (), db: &mut db::Database) -> Result<(), PassError> {
         // TODO: use the repl's CommandVec
         let commands = cmd::CommandVec::build();
         println!("Commands");
@@ -23,8 +24,9 @@ impl Command for CommandHelp {
         }
         println!("Enter <COMMAND> --help for usage details");
         println!("Commands can be abbreviated (eg: u for update)");
+        Ok(())
     }
-    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), String> {
+    fn parse(&self, raw_args: &clap::ArgMatches, db: &mut db::Database) -> Result<(), PassError> {
         Ok(())
     }
     fn clap_app(&self) -> clap::App {

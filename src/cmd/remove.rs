@@ -1,5 +1,6 @@
 use super::{Command, CommandWrapper};
 use crate::{db, cli};
+use crate::error::PassError;
 
 pub struct ArgsRemove {
     index: usize,
@@ -18,13 +19,15 @@ impl Command for CommandRemove {
     fn help(&self) -> &'static str {
         "Remove an account"
     }
-    fn run(&self, opts: ArgsRemove, db: &mut db::Database) {
+    fn run(&self, opts: ArgsRemove, db: &mut db::Database) -> Result<(), PassError> {
+        db.remove_record(opts.index)?;
+        Ok(())
     }
     fn parse(
         &self,
         raw_args: &clap::ArgMatches,
         db: &mut db::Database,
-    ) -> Result<ArgsRemove, String> {
+    ) -> Result<ArgsRemove, PassError> {
         let index = db::parse_index(db, raw_args.value_of("index").unwrap())?;
         Ok(ArgsRemove { index: index })
     }

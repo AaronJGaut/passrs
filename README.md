@@ -14,7 +14,7 @@ My first goal is to reach feature pairity with `passman`, then I plan to add som
 There are two ways to use `passrs`:
 
 * Call `passrs` with a subcommand to perform that operation.
-* Call `passrs` without a subcommand to end an interactive session. This saves you from having to repeatedly enter the master password for each operation.
+* Call `passrs` without a subcommand to enter an interactive session. This saves you from having to repeatedly enter the master password for each operation.
 
 Use the `--help` flag to get more information.
 
