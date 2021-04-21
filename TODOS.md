@@ -7,7 +7,6 @@
 * Fix issue where help command recreates the whole command list independently of what is actually in use
 * Fix panic on yanking when x isn't available
 * Use pager for long output (list command)
-* Show a menu when searching is ambiguous
 * Research proper salting procedure - is it better/worse to resalt on each save?
 * Confirm that generated passwords are using secure rng (os entropy?)
 * Fix any other unintended panics

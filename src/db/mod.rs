@@ -139,7 +139,30 @@ pub fn parse_index(db: &mut Database, input: &str) -> Result<usize, PassError> {
         return Ok(matches[0].0);
     }
     if matches.len() > 1 {
-        return Err(PassError::Other(String::from("Ambiguous account - more than one match")));
+        for item in matches.iter().enumerate() {
+            let record = &(item.1).1;
+            println!("{:>5} {}", item.0, record.account);
+            if let Some(username) = &record.username {
+                println!("\tUsername: {}", username);
+            }
+            if let Some(notes) = &record.notes {
+                println!("\tNotes:");
+                for line in notes.lines() {
+                    println!("\t\t{}", line);
+                }
+            }
+        }
+        let index = cli::read("Ambiguous account name. Pick a number: ", false)?;
+        let num = usize::from_str_radix(&index, 10);
+        if let Ok(idx) = num {
+            if idx < matches.len() {
+                return Ok(matches[idx].0);
+            } else {
+                return Err(PassError::Other(String::from("Index out of bounds")));
+            }
+        } else {
+            return Err(PassError::Other(String::from("Not a valid index")));
+        }
     }
     if let Ok(_) = num {
         return Err(PassError::Other(String::from("Index out of bounds")));
